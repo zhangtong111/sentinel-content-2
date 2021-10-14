@@ -22,6 +22,7 @@
         },
         "NotificationEmail": {
             "type": "string",
+            "defaultValue": "abc@contoso.com",
             "metadata": {
                 "description": "Incident details will be sent to this email (ex. soc@xyz.com)"
             }, 
