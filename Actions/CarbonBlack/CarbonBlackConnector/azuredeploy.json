@@ -14,7 +14,7 @@
       }
     },
     "Service EndPoint": {
-      "defaultValue": "https://{CarbonblackBaseURL}",
+      "defaultValue": "https://defense.conferdeploy.net",
       "type": "string",
       "metadata": {
         "description": "enter the carbonblack baseURL (ex: https://defense.conferdeploy.net)"
