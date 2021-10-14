@@ -359,7 +359,7 @@
               "riskiqintelligence_1": {
                 "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/riskiqintelligence')]",
                 "connectionName": "riskiqintelligence",
-                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/,  resourceGroup().location, '/managedApis/riskiqintelligence')]"
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/',  resourceGroup().location, '/managedApis/riskiqintelligence')]"
               }
             }
           }
