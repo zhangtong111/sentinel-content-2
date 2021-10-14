@@ -272,12 +272,12 @@
           "$connections": {
             "value": {
               "azuresentinel_1": {
-                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, 'providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage')]",
+                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage')]",
                 "connectionName": "azuresentinel-Get-MDATPInvestigationPackage",
                 "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel')]"
               },
               "riskiqintelligence_1": {
-                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, 'providers/Microsoft.Web/connections/riskiqintelligence')]",
+                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/riskiqintelligence')]",
                 "connectionName": "riskiqintelligence",
                 "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/riskiqintelligence')]"
               }
