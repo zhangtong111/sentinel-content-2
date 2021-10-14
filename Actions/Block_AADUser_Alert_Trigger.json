@@ -19,6 +19,9 @@
         "PlaybookName": {
             "defaultValue": "Block-AADUser-Alert",
             "type": "string"
+        }, 
+        "workspace": {
+            "type": "string"
         }
     },
     "variables": {

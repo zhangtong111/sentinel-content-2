@@ -19,6 +19,9 @@
         "PlaybookName": {
             "defaultValue": "Block-AADUser-Incident",
             "type": "string"
+        }, 
+        "workspace": {
+            "type": "string"
         }
     },
     "variables": {
