@@ -351,7 +351,8 @@
       "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')]",
       "name": "Recent-IP-Passive-DNS",
       "type": "Microsoft.Logic/workflows",
-      "location": "canadacentral",
+      "apiVersion": "2016-06-01",
+      "location": "[resourceGroup().location]",
       "tags": {
         "LogicAppsCategory": "security"
       }
