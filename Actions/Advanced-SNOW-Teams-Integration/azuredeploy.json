@@ -19,14 +19,7 @@
             "name": "Jing Nghik"
         }
     },
-    "parameters": {
-        "PlaybookName": {
-            "defaultValue": "SNOW-Teams-Integration",
-            "type": "string",
-            "metadata": {
-                "description": "Name of the primary playbook that will be called from Azure Sentinel"
-              }
-        },	
+    "parameters": {	
         "workspace": {
             "type": "string"
         },
@@ -50,12 +43,48 @@
             "metadata": {
                 "description": "The particular Teams channel ID where the Investigation Playbook options should go."
               }
-		}
+		},
+"PlaybookName": {
+      "type": "string",
+      "value": "ServiceNow-Teams-Integration"
+    },
+    "MSUserName": {
+      "type": "string",
+      "value": "<username@domain.com>"
+    },
+    "Snow_Instance": {
+      "type": "string",
+      "value": "https://<instance>.<domainName>.com"
+    },
+    "Snow_Username": {
+      "type": "string",
+      "value": "<servicenow_username@domain.com>"
+    },
+    "Snow_Password": {
+      "type": "string",
+      "value": "<servicenow_password>"
+    },
+    "TeamsGroupId": {
+      "type": "string",
+      "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+    },
+    "AlertChannelId": {
+      "type": "string",
+      "value": "xx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
+    },
+    "InvestigationChannelId": {
+      "type": "string",
+      "value": "xx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
+    },
+    "VirusTotalAPIKey": {
+      "type": "string",
+      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
     },
     "variables": {
         "AzureSentinelConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-azuresentinel')]",
-		"ARMConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-arm')]",
-		"TeamsConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-teams')]",
+	"ARMConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-arm')]",
+	"TeamsConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-teams-arm')]",
         "SNOWConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-snow')]",
         "VirusTotalConnectionName": "[concat(parameters('PlaybookName'),'-apiconnector-virusTotal')]"
     },
