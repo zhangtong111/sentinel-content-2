@@ -272,14 +272,14 @@
           "$connections": {
             "value": {
               "azuresentinel_1": {
-                "connectionId": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage",
+                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, 'providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage')]",
                 "connectionName": "azuresentinel-Get-MDATPInvestigationPackage",
-                "id": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel"
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel')]"
               },
               "riskiqintelligence_1": {
-                "connectionId": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Web/connections/riskiqintelligence",
+                "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, 'providers/Microsoft.Web/connections/riskiqintelligence')]",
                 "connectionName": "riskiqintelligence",
-                "id": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/providers/Microsoft.Web/locations/canadacentral/managedApis/riskiqintelligence"
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/riskiqintelligence')]"
               }
             }
           }
