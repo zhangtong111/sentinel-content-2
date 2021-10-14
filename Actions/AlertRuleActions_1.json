@@ -84,6 +84,50 @@
             ]
         },
         {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Azure activity matching known threats",
+                "description": "This analytic matches Azure Activity logs to known threats from your threat intelligence repository. Reference the threat indicator to determine the threat type involved in the activity.",
+                "severity": "Medium",
+                "enabled": true,
+                "query": "AzureActivity\n| take 1\n| extend IPCustomEntity = '80.87.202.49'\n| extend AccountCustomEntity = Caller",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P14D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Impact"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                        "groupByAlertDetails": null,
+                        "groupByCustomDetails": null
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": null
+            }
+        },
+        {
             "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817/actions/c078b0279b3d47d097c597bfc36bcb05')]",
             "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817/c078b0279b3d47d097c597bfc36bcb05')]",
             "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions",
