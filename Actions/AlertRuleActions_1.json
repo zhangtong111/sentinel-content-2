@@ -348,7 +348,7 @@
           }
         }
       },
-      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')]",
       "name": "Recent-IP-Passive-DNS",
       "type": "Microsoft.Logic/workflows",
       "apiVersion": "2016-06-01",
@@ -408,8 +408,8 @@
       "apiVersion": "2021-09-01-preview",
       "properties": {
         "ruleId": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
-        "triggerUri": "[listCallbackURL(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS','/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
-        "logicAppResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')",
+        "triggerUri": "[listCallbackURL(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS','/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
+        "logicAppResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')",
         "operatesOn": "Alert"
       },
       "dependsOn": [
