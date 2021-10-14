@@ -8,6 +8,86 @@
   },
   "resources": [
     {
+    "kind": "V1",
+    "properties": {
+        "displayName": "v-dhbojj@microsoft.com",
+        "authenticatedUser": {
+            "name": "v-dhbojj@microsoft.com"
+        },
+        "statuses": [
+            {
+                "status": "Connected"
+            }
+        ],
+        "customParameterValues": {},
+        "nonSecretParameterValues": {
+            "token:TenantId": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+            "token:grantType": "code"
+        },
+        "api": {
+            "name": "azuresentinel",
+            "displayName": "Azure Sentinel",
+            "description": "Cloud-native SIEM with a built-in AI so you can focus on what matters most",
+            "iconUri": "https://connectoricons-prod.azureedge.net/releases/v1.0.1508/1.0.1508.2530/azuresentinel/icon.png",
+            "brandColor": "#0072C6",
+            "category": "Standard",
+            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/azuresentinel')]"
+            "type": "Microsoft.Web/locations/managedApis"
+        },
+        "testLinks": [],
+        "testRequests": []
+    },
+    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/Microsoft.Web/connections/azuresentinel')]"
+    "name": "azuresentinel",
+    "type": "Microsoft.Web/connections",
+    "apiVersion": "2016-06-01"     
+},
+    {
+    "kind": "V1",
+    "properties": {
+        "displayName": "RiskIQ",
+        "authenticatedUser": {},
+        "statuses": [
+            {
+                "status": "Error",
+                "target": "username",
+                "error": {
+                    "code": "ConfigurationNeeded",
+                    "message": "Parameter value missing."
+                }
+            },
+            {
+                "status": "Error",
+                "target": "password",
+                "error": {
+                    "code": "ConfigurationNeeded",
+                    "message": "Parameter value missing."
+                }
+            }
+        ],
+        "customParameterValues": {},
+        "nonSecretParameterValues": {},
+        "createdTime": "2020-09-17T13:57:09.789442Z",
+        "changedTime": "2020-09-17T13:57:09.789442Z",
+        "api": {
+            "name": "riskiqintelligence",
+            "displayName": "RiskIQ",
+            "description": "RiskIQ Security Intelligence Services provides direct, high volume access to RiskIQ data, allowing mature customers the ability to use this data to defend against threats to their environment.",
+            "iconUri": "https://connectoricons-prod.azureedge.net/riskiqintelligence/icon_1.0.1360.2036.png",
+            "brandColor": "#1a7cb9",
+            "category": "Standard",            
+            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/',resourceGroup().location, '/managedApis/riskiqintelligence')]"
+            "type": "Microsoft.Web/locations/managedApis"
+        },
+        "testLinks": [],
+        "testRequests": []
+    },
+    "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/',resourceGroup().name, '/providers/Microsoft.Web/connections/riskiqintelligence')]"
+    "name": "riskiqintelligence",
+    "type": "Microsoft.Web/connections",
+    "apiVersion": "2016-06-01"   
+}
+    {
       "properties": {
         "provisioningState": "Succeeded",
         "state": "Enabled",
@@ -274,12 +354,12 @@
               "azuresentinel_1": {
                 "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage')]",
                 "connectionName": "azuresentinel-Get-MDATPInvestigationPackage",
-                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel')]"
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/',  resourceGroup().location, '/managedApis/azuresentinel')]"
               },
               "riskiqintelligence_1": {
                 "connectionId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/connections/riskiqintelligence')]",
                 "connectionName": "riskiqintelligence",
-                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/canadacentral/managedApis/riskiqintelligence')]"
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/,  resourceGroup().location, '/managedApis/riskiqintelligence')]"
               }
             }
           }
