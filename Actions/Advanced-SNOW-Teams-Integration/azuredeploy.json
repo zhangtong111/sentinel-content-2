@@ -46,39 +46,27 @@
 		},
 "PlaybookName": {
       "type": "string",
-      "value": "ServiceNow-Teams-Integration"
+      "defaultValue": "ServiceNow-Teams-Integration"
     },
     "MSUserName": {
       "type": "string",
-      "value": "<username@domain.com>"
+      "defaultValue": "<username@domain.com>"
     },
     "Snow_Instance": {
       "type": "string",
-      "value": "https://<instance>.<domainName>.com"
+      "defaultValue": "https://<instance>.<domainName>.com"
     },
     "Snow_Username": {
       "type": "string",
-      "value": "<servicenow_username@domain.com>"
+      "defaultValue": "servicenow_username@domain.com"
     },
     "Snow_Password": {
       "type": "string",
-      "value": "<servicenow_password>"
-    },
-    "TeamsGroupId": {
-      "type": "string",
-      "value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
-    },
-    "AlertChannelId": {
-      "type": "string",
-      "value": "xx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
-    },
-    "InvestigationChannelId": {
-      "type": "string",
-      "value": "xx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
+      "defaultValue": "servicenow_password"
     },
     "VirusTotalAPIKey": {
       "type": "string",
-      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      "defaultValue: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     }
     },
     "variables": {
