@@ -1,0 +1,80 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/86f94adc-b17c-4813-9619-40cd19f6a0cb')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/86f94adc-b17c-4813-9619-40cd19f6a0cb')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Fortinet - Data transfer to IP address matched in Threat Intelligence",
+                "description": "Fortinet data saw a machine in your environment connecting to an IP Address that was matched against Threat Intelligence and associated data transfer. This network connection should be considered suspicious.",
+                "severity": "High",
+                "enabled": true,
+                "query": "DeviceNetworkEvents\r\n| where RemoteIP == \"104.41.203.0\"\r\n| where ActionType == \"ConnectionSuccess\"\r\n| where InitiatingProcessFolderPath startswith \"c:\\\\windows\\\\system32\\\\windowspowershell\\\\v1.0\"\r\n| where InitiatingProcessCommandLine contains \"-encodedCommand\"\r\n| where DeviceName == \"adfs01.seccxp.ninja\"\r\n| extend DestinationIPAddress = RemoteIP, HostName = \"adfs01\", DnsDomain = \"seccxp.ninja\", NetBiosName = \"ADFS01.seccxp.ninja\", SentBytes = 22545, DeviceAction = \"accept\", DeviceVendor = \"Fortinet\"\r\n| project TimeGenerated, DestinationIPAddress, HostName, DnsDomain, NetBiosName, SentBytes, RemotePort ",
+                "queryFrequency": "PT30M",
+                "queryPeriod": "PT30M",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": true,
+                "tactics": [
+                    "CommandAndControl"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "HostName",
+                                "columnName": "HostName"
+                            },
+                            {
+                                "identifier": "DnsDomain",
+                                "columnName": "DnsDomain"
+                            },
+                            {
+                                "identifier": "NetBiosName",
+                                "columnName": "NetBiosName"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "DestinationIPAddress"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

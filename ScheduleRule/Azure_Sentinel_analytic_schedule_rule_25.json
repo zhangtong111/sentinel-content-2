@@ -1,0 +1,312 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/132abed2-63b7-496c-8bca-2bf0dc4488b7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/132abed2-63b7-496c-8bca-2bf0dc4488b7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Sharepoint/OneDrive anonymous link created, used, updated",
+                "description": "Checking OfficeActivities, SharePoint and OneDrive workloads for \"AnonymousLinkCreated\" \"AnonymousLinkUsed\" \"AnonymousLinkUpdated\"",
+                "severity": "High",
+                "enabled": false,
+                "query": "OfficeActivity\r\n// Only admin or global-admin can disable/remove policy, but UserType Regular can change Sharing Policy (SharingPolicyChanged)\r\n// | where RecordType =~ \"ExchangeAdmin\"\r\n| where OfficeWorkload == \"SharePoint\" or OfficeWorkload == \"OneDrive\"\r\n| where Operation == \"AnonymousLinkCreated\" or Operation == \"AnonymousLinkUsed\" or Operation == \"AnonymousLinkUpdated\"\r\n| extend ClientIPOnly = case( \r\n  ClientIP has \".\", tostring(split(ClientIP,\":\")[0]), \r\n  ClientIP has \"[\", tostring(trim_start(@'[[]',tostring(split(ClientIP,\"]\")[0]))),\r\n  ClientIP\r\n)\r\n| extend Port = case(\r\n  ClientIP has \".\", (split(ClientIP,\":\")[1]),\r\n  ClientIP has \"[\", tostring(split(ClientIP,\"]:\")[1]),\r\n  ClientIP\r\n) \r\n  | summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), OperationCount = count() by Operation, UserType, UserId, ClientIP = ClientIPOnly, Port, ResultStatus, Parameters\r\n  | extend timestamp = StartTimeUtc, AccountCustomEntity = UserId, IPCustomEntity = ClientIP",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "PT1H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Persistence",
+                    "DefenseEvasion",
+                    "Exfiltration"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": {
+                    "OperationCount": "OperationCount",
+                    "Operation": "Operation",
+                    "ResultStatus": "ResultStatus"
+                },
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/66a9d844-eb84-4ab9-8906-66303caf572f')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/66a9d844-eb84-4ab9-8906-66303caf572f')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Sharepoint/OneDrive policy tampering",
+                "description": "Checking OfficeActivities, SharePoint and OneDrive workloads for \"SharingPolicyChanged\" \"DeviceAccessPolicyChanged\" \"NetworkAccessPolicyChanged\" of Administrators",
+                "severity": "High",
+                "enabled": false,
+                "query": "OfficeActivity\r\n// Only admin or global-admin can disable/remove policy, but UserType Regular can change Sharing Policy (SharingPolicyChanged)\r\n// | where RecordType =~ \"ExchangeAdmin\"\r\n| where OfficeWorkload == \"SharePoint\" or OfficeWorkload == \"OneDrive\"\r\n| where UserType in~ (\"Admin\",\"DcAdmin\") // To be changed of UserType Regular Sharing Policy changed should be monitored as well\r\n| where Operation == \"SharingPolicyChanged\" or Operation == \"DeviceAccessPolicyChanged\" or Operation == \"NetworkAccessPolicyChanged\"\r\n| extend changedPolicy_ = tostring(parse_json(ModifiedProperties)[0].Name)\r\n| extend oldPolicyValue_ = tostring(parse_json(ModifiedProperties)[0].OldValue)\r\n| extend newPolicyValue_ = tostring(parse_json(ModifiedProperties)[0].NewValue)\r\n| extend ClientIPOnly = case( \r\n  ClientIP has \".\", tostring(split(ClientIP,\":\")[0]), \r\n  ClientIP has \"[\", tostring(trim_start(@'[[]',tostring(split(ClientIP,\"]\")[0]))),\r\n  ClientIP\r\n)\r\n| extend Port = case(\r\n  ClientIP has \".\", (split(ClientIP,\":\")[1]),\r\n  ClientIP has \"[\", tostring(split(ClientIP,\"]:\")[1]),\r\n  ClientIP\r\n) \r\n  | summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), OperationCount = count() by Operation, UserType, UserId, ClientIP = ClientIPOnly, Port, ResultStatus, Parameters, changedPolicy_, oldPolicyValue_, newPolicyValue_\r\n  | extend timestamp = StartTimeUtc, AccountCustomEntity = UserId, IPCustomEntity = ClientIP",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "PT1H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Persistence",
+                    "DefenseEvasion"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": {
+                    "ChangedPolicy": "changedPolicy_",
+                    "OldPolicyValue": "oldPolicyValue_",
+                    "NewPolicyValue": "newPolicyValue_",
+                    "OperationCount": "OperationCount",
+                    "Operation": "Operation",
+                    "ResultStatus": "ResultStatus"
+                },
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e9e850f4-e0a0-45af-905e-922aa77eee3e')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e9e850f4-e0a0-45af-905e-922aa77eee3e')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Sign-ins from IPs that attempt sign-ins to disabled accounts-inwafula",
+                "description": "Identifies IPs with failed attempts to sign in to one or more disabled accounts signed in successfully to another account.\nReferences: https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-sign-ins-error-codes\n50057 - User account is disabled. The account has been disabled by an administrator.",
+                "severity": "High",
+                "enabled": true,
+                "query": "let lookBack = 1d;\nSigninLogs \n| where TimeGenerated >= ago(lookBack)\n| where ResultType == \"50057\" \n| where ResultDescription == \"User account is disabled. The account has been disabled by an administrator.\" \n| summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), disabledAccountLoginAttempts = count(), \ndisabledAccountsTargeted = dcount(UserPrincipalName), applicationsTargeted = dcount(AppDisplayName), disabledAccountSet = makeset(UserPrincipalName), \napplicationSet = makeset(AppDisplayName) by IPAddress\n| order by disabledAccountLoginAttempts desc\n| join kind= leftouter (\n    // Consider these IPs suspicious - and alert any related  successful sign-ins\n    SigninLogs\n    | where TimeGenerated >= ago(lookBack)\n    | where ResultType == 0\n    | summarize successfulAccountSigninCount = dcount(UserPrincipalName), successfulAccountSigninSet = makeset(UserPrincipalName, 15) by IPAddress\n    // Assume IPs associated with sign-ins from 100+ distinct user accounts are safe\n    | where successfulAccountSigninCount < 100\n) on IPAddress  \n// IPs from which attempts to authenticate as disabled user accounts originated, and had a non-zero success rate for some other account\n| where successfulAccountSigninCount != 0\n| project StartTimeUtc, EndTimeUtc, IPAddress, disabledAccountLoginAttempts, disabledAccountsTargeted, disabledAccountSet, applicationSet, \nsuccessfulAccountSigninCount, successfulAccountSigninSet\n| order by disabledAccountLoginAttempts\n| extend timestamp = StartTimeUtc, IPCustomEntity = IPAddress",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "P14D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "InitialAccess",
+                    "Persistence"
+                ],
+                "alertRuleTemplateName": "500c103a-0319-4d56-8e99-3cec8d860757",
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": null,
+                        "groupByCustomDetails": null
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "AadUserId",
+                                "columnName": "disabledAccountsTargeted"
+                            },
+                            {
+                                "identifier": "Name",
+                                "columnName": "disabledAccountSet"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "successfulAccountSigninCount"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/21e698c6-f68b-40bd-80cd-daee9553f4f7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/21e698c6-f68b-40bd-80cd-daee9553f4f7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Solarwinds Serv-U Remote Memory Escape Vulnerability",
+                "description": "Identifies a match across IOC's related to DEV-0322 targeting SolarWinds Serv-U software.",
+                "severity": "High",
+                "enabled": true,
+                "query": "let iocs = externaldata(DateAdded:string,IoC:string,Type:string,TLP:string) [@\"https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Sample%20Data/Feeds/DEV-0322_SolarWinds_Serv-U_IoC.csv\"] with (format=\"csv\", ignoreFirstRecord=True);\n  let process = (iocs | where Type =~ \"process\" | project IoC);\n  let parentprocess = (iocs | where Type =~ \"parentprocess\" | project IoC);\n  let IPList = (iocs | where Type =~ \"ip\"| project IoC);\n  let IPRegex = '[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}\\\\.[0-9]{1,3}';\n  (union isfuzzy=true\n  (CommonSecurityLog\n  | where SourceIP in (IPList) or DestinationIP in (IPList) or RequestURL has_any (IPList) or Message has_any (IPList)\n  | project TimeGenerated, SourceIP, DestinationIP, Message, SourceUserID, RequestURL, Type\n  | extend MessageIP = extract(IPRegex, 0, Message)\n  | extend IPMatch = case(SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", MessageIP in (IPList), \"Message\", RequestURL in (IPList), \"RequestUrl\",\"NoMatch\"), AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, IPMatch == \"Message\", MessageIP, IPMatch == \"RequestUrl\", RequestURL, \"NoMatch\"), AccountCustomEntity = SourceUserID\n  ),\n  (DnsEvents\n  | where IPAddresses in (IPList)  \n  | project TimeGenerated, Computer, IPAddresses, Name, ClientIP, Type\n  | extend DestinationIPAddress = IPAddresses, DNSName = Name, Host = Computer , AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, IPCustomEntity = DestinationIPAddress, HostCustomEntity = Host\n  ),\n  (VMConnection\n  | where SourceIp in (IPList) or DestinationIp in (IPList)\n  | parse RemoteDnsCanonicalNames with * '[\"' DNSName '\"]' *\n  | project TimeGenerated, Computer, Direction, ProcessName, SourceIp, DestinationIp, DestinationPort, RemoteDnsQuestions, DNSName,BytesSent, BytesReceived, RemoteCountry, Type\n  | extend IPMatch = case( SourceIp in (IPList), \"SourceIP\", DestinationIp in (IPList), \"DestinationIP\", \"None\") , AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIp, IPMatch == \"DestinationIP\", DestinationIp, \"NoMatch\"), HostCustomEntity = Computer, ProcessCustomEntity = ProcessName\n  ),\n  (Event\n  | where Source == \"Microsoft-Windows-Sysmon\"\n  | where EventID == 3\n  | extend EvData = parse_xml(EventData)\n  | extend EventDetail = EvData.DataItem.EventData.Data\n  | extend SourceIP = EventDetail.[9].[\"#text\"], DestinationIP = EventDetail.[14].[\"#text\"], Image = EventDetail.[4].[\"#text\"]\n  | where SourceIP in (IPList) or DestinationIP in (IPList) \n  | project TimeGenerated, SourceIP, DestinationIP, Image, UserName, Computer, Type\n  | extend IPMatch = case( SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", \"None\") , AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, AccountCustomEntity = UserName, ProcessCustomEntity = split(Image, '\\\\', -1)[-1], HostCustomEntity = Computer , IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, \"None\")\n  ),  \n  (OfficeActivity\n  | where ClientIP in (IPList) \n  | project TimeGenerated, UserAgent, Operation, RecordType, UserId, ClientIP, AlertDetail = 'Dev-0322 IOC match', Type\n  | extend timestamp = TimeGenerated, IPCustomEntity = ClientIP, AccountCustomEntity = UserId\n  ),\n  (DeviceNetworkEvents\n  | where  RemoteIP in (IPList)\n  | project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, RemoteIP, RemoteUrl, RemotePort, LocalIP, Type\n  | extend timestamp = TimeGenerated, IPCustomEntity = RemoteIP, HostCustomEntity = DeviceName,  AlertDetail = 'Dev-0322 IOC match', UrlCustomEntity =RemoteUrl, ProcessCustomEntity = InitiatingProcessFileName\n  ),\n  (WindowsFirewall\n  | where SourceIP in (IPList) or DestinationIP in (IPList) \n  | project TimeGenerated, Computer, CommunicationDirection, SourceIP, DestinationIP, SourcePort, DestinationPort, Type\n  | extend IPMatch = case( SourceIP in (IPList), \"SourceIP\", DestinationIP in (IPList), \"DestinationIP\", \"None\"), AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , IPCustomEntity = case(IPMatch == \"SourceIP\", SourceIP, IPMatch == \"DestinationIP\", DestinationIP, \"None\")\n  ),\n  (AzureDiagnostics\n  | where ResourceType == \"AZUREFIREWALLS\"\n  | where Category == \"AzureFirewallDnsProxy\"\n  | project TimeGenerated,Resource, msg_s, Type\n  | parse msg_s with \"DNS Request: \" ClientIP \":\" ClientPort \" - \" QueryID \" \" Request_Type \" \" Request_Class \" \" Request_Name \". \" Request_Protocol \" \" Request_Size \" \" EDNSO_DO \" \" EDNS0_Buffersize \" \" Responce_Code \" \" Responce_Flags \" \" Responce_Size \" \" Response_Duration\n  | where  ClientIP in (IPList)\n  | extend timestamp = TimeGenerated, DNSName = Request_Name, IPCustomEntity = ClientIP, AlertDetail = 'Dev-0322 IOC match'\n  ),\n  (AzureDiagnostics \n  | where ResourceType == \"AZUREFIREWALLS\"\n  | where Category == \"AzureFirewallApplicationRule\"\n  | project TimeGenerated,Resource, msg_s\n  | parse msg_s with Protocol 'request from ' SourceHost ':' SourcePort 'to ' DestinationHost ':' DestinationPort '. Action:' Action\n  | where isnotempty(DestinationHost)\n  | where SourceHost in (IPList)\n  | extend timestamp = TimeGenerated, DNSName = DestinationHost, IPCustomEntity = SourceHost, AlertDetail = 'Dev-0322 IOC match'\n  ),\n  (Event\n  | where Source == \"Microsoft-Windows-Sysmon\"\n  | extend EvData = parse_xml(EventData)\n  | extend EventDetail = EvData.DataItem.EventData.Data\n  | extend ParentImage = EventDetail.[20].[\"#text\"], Image = EventDetail.[4].[\"#text\"]\n  | where ( ParentImage has_any (parentprocess) and Image has_any (process))\n  | parse EventDetail with * 'SHA256=' SHA256 '\",' *\n  | project TimeGenerated, EventDetail, UserName, Computer, Type, Source, SHA256,Image, ParentImage \n  | extend Type = strcat(Type, \": \", Source), Account = UserName, FileHash = SHA256, AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = split(Image, '\\\\', -1)[-1], FileHashCustomEntity = FileHash\n  ),\n  (DeviceFileEvents\n  | extend CommandLineIP = extract(IPRegex, 0,InitiatingProcessCommandLine)\n  | where (InitiatingProcessFileName in (process) and InitiatingProcessParentFileName in (parentprocess))  or CommandLineIP in (IPList)\n  | project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, RequestAccountName, RequestSourceIP, InitiatingProcessSHA256, Type, CommandLineIP\n  | extend Account = RequestAccountName, Computer = DeviceName, IPAddress = RequestSourceIP, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, FileHashCustomEntity = FileHash, IPCustomEntity = CommandLineIP\n  ),\n  (DeviceEvents\n  | extend CommandLineIP = extract(IPRegex, 0,InitiatingProcessCommandLine)\n  | where (InitiatingProcessFileName in (process) and InitiatingProcessParentFileName in (parentprocess)) or CommandLineIP in (IPList)\n  | project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessSHA256, Type, CommandLineIP\n  | extend Account = InitiatingProcessAccountName, Computer = DeviceName, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, Image = InitiatingProcessFolderPath, AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, FileHashCustomEntity = FileHash, IPCustomEntity = CommandLineIP\n  ),\n  (DeviceProcessEvents\n  | extend CommandLineIP = extract(IPRegex, 0,InitiatingProcessCommandLine)\n  | where (InitiatingProcessFileName in (process) and InitiatingProcessParentFileName in (parentprocess))  or CommandLineIP in (IPList)\n  | project TimeGenerated, ActionType, DeviceId, DeviceName, InitiatingProcessAccountDomain, InitiatingProcessAccountName, InitiatingProcessCommandLine, InitiatingProcessFolderPath, InitiatingProcessId, InitiatingProcessParentFileName, InitiatingProcessFileName,  InitiatingProcessSHA256, Type, CommandLineIP, AccountName\n  | extend Account = AccountName, Computer = DeviceName, IPAddress = CommandLineIP, CommandLine = InitiatingProcessCommandLine, FileHash = InitiatingProcessSHA256, AlertDetail = 'Dev-0322 IOC match'\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = InitiatingProcessFileName, FileHashCustomEntity = FileHash, IPCustomEntity = IPAddress\n  ),\n  (  SecurityEvent\n  | where EventID == 4688\n  | extend CommandLineIP = extract(IPRegex, 0, CommandLine)\n  | where CommandLineIP in (IPList) or (NewProcessName  has_any (process) and ParentProcessName has_any (parentprocess))\n  | project TimeGenerated, Computer, NewProcessName, ParentProcessName, Account, NewProcessId, Type, CommandLine, CommandLineIP\n  | extend timestamp = TimeGenerated, HostCustomEntity = Computer , AccountCustomEntity = Account, ProcessCustomEntity = NewProcessName, AlertDetail = 'Dev-0322 IOC match', IPCustomEntity = CommandLineIP\n  )\n  )\n",
+                "queryFrequency": "PT5H",
+                "queryPeriod": "PT5H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "FileHash",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Value",
+                                "columnName": "SHA256"
+                            },
+                            {
+                                "identifier": "Algorithm",
+                                "columnName": "FileHashCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "HostCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Process",
+                        "fieldMappings": [
+                            {
+                                "identifier": "ProcessId",
+                                "columnName": "ProcessCustomEntity_string"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,287 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/7e4ebdba-a0c1-4eb9-8a57-4614e81f85c7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/7e4ebdba-a0c1-4eb9-8a57-4614e81f85c7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Modified domain federation trust settings",
+                "description": "This will alert when a user or application modifies the federation settings on the domain or Update domain authentication from Managed to Federated.\nFor example, this alert will trigger when a new Active Directory Federated Service (ADFS) TrustedRealm object, such as a signing certificate, is added to the domain.\nModification to domain federation settings should be rare. Confirm the added or modified target domain/URL is legitimate administrator behavior.\nTo understand why an authorized user may update settings for a federated domain in Office 365, Azure, or Intune, see: https://docs.microsoft.com/office365/troubleshoot/active-directory/update-federated-domain-office-365.\nFor details on security realms that accept security tokens, see the ADFS Proxy Protocol (MS-ADFSPP) specification: https://docs.microsoft.com/openspecs/windows_protocols/ms-adfspp/e7b9ea73-1980-4318-96a6-da559486664b.\nFor further information on AuditLogs please see https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-audit-activities.",
+                "severity": "High",
+                "enabled": true,
+                "query": "(union isfuzzy=true\n(\nAuditLogs\n| where OperationName =~ \"Set federation settings on domain\"\n//| where Result =~ \"success\"   // commenting out, as it may be interesting to capture failed attempts\n| mv-expand TargetResources\n| extend modifiedProperties = parse_json(TargetResources).modifiedProperties\n| mv-expand modifiedProperties\n| extend targetDisplayName = tostring(parse_json(modifiedProperties).displayName)\n| mv-expand AdditionalDetails\n),\n(\nAuditLogs\n| where OperationName =~ \"Set domain authentication\"\n//| where Result =~ \"success\"   // commenting out, as it may be interesting to capture failed attempts\n| mv-expand TargetResources\n| extend modifiedProperties = parse_json(TargetResources).modifiedProperties\n| mv-expand modifiedProperties\n| extend targetDisplayName = tostring(parse_json(modifiedProperties).displayName), NewDomainValue=tostring(parse_json(modifiedProperties).newValue)\n| where NewDomainValue has \"Federated\"\n)\n)\n| extend UserAgent = iff(AdditionalDetails.key == \"User-Agent\",tostring(AdditionalDetails.value),\"\")\n| extend InitiatingUserOrApp = iff(isnotempty(InitiatedBy.user.userPrincipalName),tostring(InitiatedBy.user.userPrincipalName), tostring(InitiatedBy.app.displayName))\n| extend InitiatingIpAddress = iff(isnotempty(InitiatedBy.user.ipAddress), tostring(InitiatedBy.user.ipAddress), tostring(InitiatedBy.app.ipAddress))\n| project-reorder TimeGenerated, OperationName, InitiatingUserOrApp, AADOperationType, targetDisplayName, Result, InitiatingIpAddress, UserAgent, CorrelationId, TenantId, AADTenantId\n| extend timestamp = TimeGenerated, AccountCustomEntity = InitiatingUserOrApp, IPCustomEntity = InitiatingIpAddress",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "CredentialAccess"
+                ],
+                "alertRuleTemplateName": "95dc4ae3-e0f2-48bd-b996-cdd22b90f9af",
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b8bb05c5-4bf3-4687-b3b1-b94c01e71825')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b8bb05c5-4bf3-4687-b3b1-b94c01e71825')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "PLC Stop Command issued outside maintenance window",
+                "description": "",
+                "severity": "High",
+                "enabled": true,
+                "query": "let MaintWin= datatable (WinName: string, startDate: datetime, endDate: datetime, DummyJoin:string) [\r\n    'Sem1', datetime(2021-09-24,04:31:33.425Z), datetime(2021-09-27T01:00:00.15Z),\"1\",\r\n    'Sem2', datetime(2022-05-25T01:00:00.15Z), datetime(2021-05-26T01:00:00.15),\"1\",\r\n];\r\nlet PrivEscal=(SecurityAlert| where TimeGenerated > ago(5h) and AlertName == \"Malicious credential theft tool execution detected\"\r\n| extend DummyJoin2=\"1\"\r\n| extend Host_Name = tostring(parse_json(Entities)[0].FQDN)\r\n| extend LastExternalIpAddress = tostring(parse_json(Entities)[0].LastExternalIpAddress));\r\nlet StopPlc=(SecurityAlert\r\n    | where TimeGenerated > ago(7d)\r\n    | where AlertName == \"An S7 Stop PLC Command was Sent\"\r\n    | extend SourceDeviceAddress = tostring(parse_json(ExtendedProperties).SourceDeviceAddress)\r\n    | extend DestinationDeviceAddress = tostring(parse_json(ExtendedProperties).DestinationDeviceAddress)\r\n    | where ipv4_is_in_range(SourceDeviceAddress, \"192.168.117.0/24\") == false and SourceDeviceAddress !in (\"192.168.117.20\")\r\n    | extend DummyJoin=\"1\"\r\n    | project TimeGenerated, SourceDeviceAddress, DestinationDeviceAddress,DummyJoin);\r\nlet maint=(MaintWin\r\n| join kind=inner      (StopPlc) on DummyJoin \r\n| where TimeGenerated !between (startDate .. endDate)\r\n| project TimeGenerated, SourceDeviceAddress, DestinationDeviceAddress, WinName\r\n| extend DummyJoin2=\"1\");\r\nPrivEscal\r\n| join (maint) on DummyJoin2 | project Host_Name, TimeGenerated, SourceDeviceAddress, DestinationDeviceAddress, WinName, LastExternalIpAddress\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "P7D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": {
+                    "alertDisplayNameFormat": "PLC Stop Command issued outside maintenance window: {{WinName}}",
+                    "alertDescriptionFormat": null,
+                    "alertTacticsColumnName": null,
+                    "alertSeverityColumnName": null
+                },
+                "customDetails": {
+                    "MaintenaceWindow": "WinName"
+                },
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "SourceDeviceAddress"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "DestinationDeviceAddress"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "HostName",
+                                "columnName": "Host_Name"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "LastExternalIpAddress"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/612d1e6e-2ab0-4dbd-9304-9c7106840db1')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/612d1e6e-2ab0-4dbd-9304-9c7106840db1')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Security Service Registry ACL Modification",
+                "description": "Identifies attempts to modify registry ACL to evade security solutions. In the Solorigate attack, the attackers were found modifying registry permissions so services.exe cannot access the relevant registry keys to start the service.\n The detection leverages Security Event as well as MDE data to identify when specific security services registry permissions are modified. \n Only some portions of this detection are related to Solorigate, it also includes coverage for some common tools that perform this activity. \n Reference on guidance for enabling registry auditing:\n - https://docs.microsoft.com/windows/security/threat-protection/auditing/advanced-security-auditing-faq\n - https://docs.microsoft.com/windows/security/threat-protection/auditing/appendix-a-security-monitoring-recommendations-for-many-audit-events\n - https://docs.microsoft.com/windows/security/threat-protection/auditing/audit-registry\n - https://docs.microsoft.com/windows/security/threat-protection/auditing/event-4670\n   - For the event 4670 to be created the audit policy for the registry must have auditing enabled for Write DAC and/or Write Owner\n - https://github.com/OTRF/Set-AuditRule \n - https://docs.microsoft.com/dotnet/api/system.security.accesscontrol.registryrights?view=dotnet-plat-ext-5.0",
+                "severity": "High",
+                "enabled": true,
+                "query": "let servicelist = dynamic(['Services\\\\HealthService', 'Services\\\\Sense', 'Services\\\\WinDefend', 'Services\\\\MsSecFlt', 'Services\\\\DiagTrack', 'Services\\\\SgrmBroker', 'Services\\\\SgrmAgent', 'Services\\\\AATPSensorUpdater' , 'Services\\\\AATPSensor', 'Services\\\\mpssvc']);\nlet filename = dynamic([\"subinacl.exe\",'SetACL.exe']);\nlet parameters = dynamic (['/deny=SYSTEM', '/deny=S-1-5-18', '/grant=SYSTEM=r', '/grant=S-1-5-18=r', 'n:SYSTEM;p:READ', 'n1:SYSTEM;ta:remtrst;w:dacl']);\nlet FullAccess = dynamic(['A;CI;KA;;;SY', 'A;ID;KA;;;SY', 'A;CIID;KA;;;SY']);\nlet ReadAccess = dynamic(['A;CI;KR;;;SY', 'A;ID;KR;;;SY', 'A;CIID;KR;;;SY']);\nlet DenyAccess = dynamic(['D;CI;KR;;;SY', 'D;ID;KR;;;SY', 'D;CIID;KR;;;SY']);\nlet timeframe = 1d;\n(union isfuzzy=true\n(\nSecurityEvent\n| where TimeGenerated >= ago(timeframe)\n| where EventID == 4670\n| where ObjectType == 'Key'\n| where ObjectName has_any (servicelist)\n| parse EventData with * 'OldSd\">' OldSd \"<\" *\n| parse EventData with * 'NewSd\">' NewSd \"<\" *\n| extend Reason = case( (OldSd has ';;;SY' and NewSd !has ';;;SY'), 'System Account is removed', (OldSd has_any (FullAccess) and NewSd has_any (ReadAccess)) , 'System permission has been changed to read from full access', (OldSd has_any (FullAccess) and NewSd has_any (DenyAccess)), 'System account has been given denied permission', 'None')\n| project TimeGenerated, Computer, Account,  ProcessName, ProcessId, ObjectName, EventData, Activity, HandleId, SubjectLogonId, OldSd, NewSd , Reason\n),\n(\nSecurityEvent\n| where TimeGenerated >= ago(timeframe)\n| where EventID == 4688\n| extend ProcessName = tostring(split(NewProcessName, '\\\\')[-1])\n| where ProcessName in~ (filename) \n| where CommandLine has_any (servicelist) and CommandLine has_any (parameters)\n| project TimeGenerated, Computer, Account, AccountDomain, ProcessName, ProcessNameFullPath = NewProcessName, EventID, Activity, CommandLine, EventSourceName, Type\n),\n(\nDeviceProcessEvents\n| where TimeGenerated >= ago(timeframe)\n| where InitiatingProcessFileName in~ (filename) \n| where InitiatingProcessCommandLine has_any(servicelist) and InitiatingProcessCommandLine has_any (parameters)\n| extend Account = iff(isnotempty(InitiatingProcessAccountUpn), InitiatingProcessAccountUpn, InitiatingProcessAccountName), Computer = DeviceName\n| project TimeGenerated, Computer, Account, AccountDomain, ProcessName = InitiatingProcessFileName, ProcessNameFullPath = FolderPath, Activity = ActionType, CommandLine = InitiatingProcessCommandLine, Type, InitiatingProcessParentFileName\n)\n)\n| extend timestamp = TimeGenerated, AccountCustomEntity = Account, HostCustomEntity = Computer",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "DefenseEvasion"
+                ],
+                "alertRuleTemplateName": "473d57e6-f787-435c-a16b-b38b51fa9a4b",
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": null,
+                        "groupByCustomDetails": null
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "HostCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/2463a40e-b64a-40c0-b195-be1ea7e52cd4')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/2463a40e-b64a-40c0-b195-be1ea7e52cd4')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "SharePoint / OneDrive Files shared to an External Resource",
+                "description": "This Analytic Detection monitors and alerts when files are shared from SharePoint or OneDrive outside of an Organization. You will need to edit the Domain and change it to your Org(s) Domain.",
+                "severity": "High",
+                "enabled": true,
+                "query": "OfficeActivity\r\n// Specified Office Workloads, i.e. OneDrive, SharePoint\r\n| where OfficeWorkload in ('OneDrive', 'SharePoint')\r\n| where Operation == \"AddedToSecureLink\"\r\n// Please change out the \"damdemo.ca\" and replace with your orgs Domain\r\n| where TargetUserOrGroupType == \"Guest\" and TargetUserOrGroupName !contains \"damdemo.ca\"\r\n| extend PathUrl = strcat(Site_Url_, \"/\", SourceRelativeUrl_)\r\n| project TimeGenerated, OfficeWorkload, ItemType, ClientIP, UserId_, Site_Url_, PathUrl, SourceRelativeUrl_, SourceFileName_, TargetUserOrGroupName, TargetUserOrGroupType\r\n| extend AccountCustomEntity = UserId_\r\n| extend IPCustomEntity = ClientIP\r\n| extend URLCustomEntity = PathUrl\r\n\r\n",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Exfiltration"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "URL",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Url",
+                                "columnName": "URLCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

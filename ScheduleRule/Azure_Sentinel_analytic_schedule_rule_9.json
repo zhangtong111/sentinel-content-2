@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/29fc8a0d-e398-415c-8ac5-d191ba6c83a9')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/29fc8a0d-e398-415c-8ac5-d191ba6c83a9')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Create alert on account brute-force attack",
+                "description": "",
+                "severity": "High",
+                "enabled": true,
+                "query": "  let failureCountThreshold = 5;\n  let successCountThreshold = 1;\n  let authenticationWindow = 20m;\n  let aadFunc = (tableName:string){\n  table('SigninLogs')\n  | extend DeviceDetail = todynamic(DeviceDetail), Status = todynamic(DeviceDetail), LocationDetails = todynamic(LocationDetails)\n  | extend OS = DeviceDetail.operatingSystem, Browser = DeviceDetail.browser\n  | extend StatusCode = tostring(Status.errorCode), StatusDetails = tostring(Status.additionalDetails)\n  | extend State = tostring(LocationDetails.state), City = tostring(LocationDetails.city), Region = tostring(LocationDetails.countryOrRegion)\n  | where AppDisplayName has \"Azure Portal\"\n  // Split out failure versus non-failure types\n  | extend FailureOrSuccess = iff(ResultType in (\"0\", \"50125\", \"50140\", \"70043\", \"70044\"), \"Success\", \"Failure\")\n  | summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated), IPAddress = make_set(IPAddress), make_set(OS), make_set(Browser), make_set(City),\n  make_set(State), make_set(Region),make_set(ResultType), FailureCount = countif(FailureOrSuccess==\"Failure\"), SuccessCount = countif(FailureOrSuccess==\"Success\") \n  by bin(TimeGenerated, authenticationWindow), UserDisplayName, UserPrincipalName, AppDisplayName, Type\n  | where FailureCount >= failureCountThreshold and SuccessCount >= successCountThreshold\n  | mvexpand IPAddress\n  | extend IPAddress = tostring(IPAddress)\n  | extend timestamp = StartTime, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress \n  };\n  let aadSignin = aadFunc(\"SigninLogs\");\n  let aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\n  union isfuzzy=true aadSignin, aadNonInt\n\n",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "PT5H",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Discovery",
+                    "Execution"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "FullName",
+                                "columnName": "AccountCustomEntity"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "IPCustomEntity"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

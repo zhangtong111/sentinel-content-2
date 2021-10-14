@@ -1,0 +1,70 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/19449337-b68d-4658-b469-3583030ebdb5')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/19449337-b68d-4658-b469-3583030ebdb5')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Critical IoT Incident",
+                "description": "",
+                "severity": "High",
+                "enabled": true,
+                "query": "let MaintWin= datatable (WinName:string, startDate:datetime , endDate:datetime  )\r\n[\r\n'Sem1', datetime(2021-09-26,04:31:33.425Z),datetime(2021-09-27T01:00:00.15Z),\r\n'Sem2', datetime(2022-05-25T01:00:00.15Z),datetime(2021-05-26T01:00:00.15),\r\n];\r\nSecurityAlert\r\n| where TimeGenerated > ago(7d)\r\n| where AlertName == \"An S7 Stop PLC Command was Sent\" \r\n| extend SourceDeviceAddress_ = tostring(parse_json(ExtendedProperties).SourceDeviceAddress)\r\n| extend DestinationDeviceAddress_ = tostring(parse_json(ExtendedProperties).DestinationDeviceAddress)\r\n| where  ipv4_is_match(SourceDeviceAddress_,\"192.168.118.0/24\" ) and SourceDeviceAddress_ in~ (\"192.168.118.22\",\"192.168.118.11\")",
+                "queryFrequency": "PT6H",
+                "queryPeriod": "P5D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "SourceDeviceAddress_"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "DestinationDeviceAddress_"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

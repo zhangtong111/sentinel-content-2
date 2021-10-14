@@ -1,0 +1,53 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/b4971e7a-f3c0-4124-900d-220b90db414d')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/b4971e7a-f3c0-4124-900d-220b90db414d')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Correlate Unfamiliar sign-in properties and atypical travel alerts",
+                "description": "When a user has both an Unfamiliar sign-in properties alert and an Atypical travel alert within 20 minutes, the alert should be handled with a higher severity",
+                "severity": "High",
+                "enabled": true,
+                "query": "let TimeFrame = ago(1d);\nlet Alert1 = \nSecurityAlert\n| where TimeGenerated > TimeFrame\n| where AlertName == \"Unfamiliar sign-in properties\"\n| extend UserPrincipalName = tostring(parse_json(ExtendedProperties).[\"User Account\"])\n| extend Alert1Time = TimeGenerated\n| extend Alert1 = AlertName\n| extend Alert1Severity = AlertSeverity\n;\nlet Alert2 = \nSecurityAlert\n| where TimeGenerated > TimeFrame\n| where AlertName == \"Atypical travel\"\n| extend UserPrincipalName = tostring(parse_json(ExtendedProperties).[\"User Account\"])\n| extend Alert2Time = TimeGenerated\n| extend Alert2 = AlertName\n| extend Alert2Severity = AlertSeverity\n| extend CurrentLocation = strcat(tostring(parse_json(tostring(parse_json(Entities)[1].Location)).CountryCode), \"|\", tostring(parse_json(tostring(parse_json(Entities)[1].Location)).State), \"|\", tostring(parse_json(tostring(parse_json(Entities)[1].Location)).City))\n| extend PreviousLocation = strcat(tostring(parse_json(tostring(parse_json(Entities)[2].Location)).CountryCode), \"|\", tostring(parse_json(tostring(parse_json(Entities)[2].Location)).State), \"|\", tostring(parse_json(tostring(parse_json(Entities)[2].Location)).City))\n| extend CurrentIPAddress = tostring(parse_json(Entities)[1].Address)\n| extend PreviousIPAddress = tostring(parse_json(Entities)[2].Address)\n;\nAlert1\n| join kind=inner Alert2 on UserPrincipalName\n| where abs(datetime_diff('minute', Alert1Time, Alert2Time)) <=10\n| extend TimeDelta = Alert1Time - Alert2Time\n| project UserPrincipalName, Alert1, Alert1Time, Alert1Severity, Alert2, Alert2Time, Alert2Severity, TimeDelta, CurrentLocation, PreviousLocation, CurrentIPAddress, PreviousIPAddress\n| extend AccountCustomEntity = UserPrincipalName\n| extend IPCustomEntity = CurrentIPAddress",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "InitialAccess"
+                ],
+                "alertRuleTemplateName": "a3df4a32-4805-4c6d-8699-f3c888af2f67",
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": null
+            }
+        }
+    ]
+}

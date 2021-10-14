@@ -1,0 +1,88 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/11bc83b2-97e6-4303-87d6-4d36cd6cfb62')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/11bc83b2-97e6-4303-87d6-4d36cd6cfb62')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "Azure Firewall IDPS",
+                "description": "Azure Firewall IDPS has detected a threat.  This could indicate malicious traffic related to any phase in the attack chain.",
+                "severity": "High",
+                "enabled": true,
+                "query": "// IDPS rule log data \r\n// Parses the IDPS rule log data. \r\nAzureDiagnostics\r\n| where OperationName  == \"AzureFirewallIDSLog\"\r\n//| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" to \" TargetIP \":\" TargetPortInt:int \". Action: \" Action \". Signature:\" Signatureid \". IDS:\" Message\r\n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePortInt:int \" to \" TargetIP \":\" TargetPortInt:int *\r\n| parse msg_s with * \". Action: \" Action \". Signature:\" Signatureid \". IDS:\" Message \". Priority:\" Priority \". Classification:\" Classification\r\n| parse msg_s with Protocol2 \" request from \" SourceIP2 \" to \" TargetIP2 \". Action: \" Action2\r\n| extend SourcePort = tostring(SourcePortInt),TargetPort = tostring(TargetPortInt)\r\n| extend Protocol = case(Protocol == \"\", Protocol2, Protocol),SourceIP = case(SourceIP == \"\", SourceIP2, SourceIP),TargetIP = case(TargetIP == \"\", TargetIP2, TargetIP),SourcePort = case(SourcePort == \"\", \"N/A\", SourcePort),TargetPort = case(TargetPort == \"\", \"N/A\", TargetPort)\r\n| sort by TimeGenerated desc \r\n| project TimeGenerated, msg_s, Protocol, SourceIP,SourcePort,TargetIP,TargetPort,Action,Signatureid,Message,Priority,Classification",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 10000,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "PreAttack",
+                    "InitialAccess",
+                    "Execution",
+                    "Persistence",
+                    "PrivilegeEscalation",
+                    "DefenseEvasion",
+                    "CredentialAccess",
+                    "Discovery",
+                    "LateralMovement",
+                    "Exfiltration",
+                    "Collection",
+                    "CommandAndControl",
+                    "Impact"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P7D",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": {
+                    "Priority": "Priority",
+                    "Message": "Message",
+                    "Classification": "Classification"
+                },
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "SourceIP"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "URL",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Url",
+                                "columnName": "TargetIP"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
