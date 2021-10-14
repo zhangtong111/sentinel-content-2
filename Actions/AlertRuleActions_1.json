@@ -1,146 +1,419 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "workspace": {
-            "type": "String"
-        }
-    },
-    "resources": [
-                {
-            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6858cc6d-8cab-4710-8f55-ad3c1eeee84f')]",
-            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6858cc6d-8cab-4710-8f55-ad3c1eeee84f')]",
-            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
-            "kind": "Scheduled",
-            "apiVersion": "2021-09-01-preview",
-            "properties": {
-                "displayName": "Attempts to sign in to disabled accounts",
-                "description": "Identifies failed attempts to sign in to disabled accounts across multiple Azure Applications.\nDefault threshold for Azure Applications attempted to sign in to is 3.\nReferences: https://docs.microsoft.com/azure/active-directory/reports-monitoring/reference-sign-ins-error-codes\n50057 - User account is disabled. The account has been disabled by an administrator.",
-                "severity": "Medium",
-                "enabled": true,
-                "query": "let threshold = 3;\nlet aadFunc = (tableName:string){\ntable(tableName)\n| where ResultType == \"50057\"\n| where ResultDescription =~ \"User account is disabled. The account has been disabled by an administrator.\"\n| summarize StartTime = min(TimeGenerated), EndTime = max(TimeGenerated), applicationCount = dcount(AppDisplayName), \napplicationSet = make_set(AppDisplayName), count() by UserPrincipalName, IPAddress, Type\n| where applicationCount >= threshold\n| extend timestamp = StartTime, AccountCustomEntity = UserPrincipalName, IPCustomEntity = IPAddress\n};\nlet aadSignin = aadFunc(\"SigninLogs\");\nlet aadNonInt = aadFunc(\"AADNonInteractiveUserSignInLogs\");\nunion isfuzzy=true aadSignin, aadNonInt",
-                "queryFrequency": "P1D",
-                "queryPeriod": "P1D",
-                "triggerOperator": "GreaterThan",
-                "triggerThreshold": 0,
-                "suppressionDuration": "PT5H",
-                "suppressionEnabled": false,
-                "tactics": [
-                    "InitialAccess"
-                ],
-                "alertRuleTemplateName": "75ea5c39-93e5-489b-b1e1-68fa6c9d2d04",
-                "incidentConfiguration": {
-                    "createIncident": true,
-                    "groupingConfiguration": {
-                        "enabled": true,
-                        "reopenClosedIncident": false,
-                        "lookbackDuration": "P1D",
-                        "matchingMethod": "AllEntities",
-                        "groupByEntities": [],
-                        "groupByAlertDetails": [],
-                        "groupByCustomDetails": []
-                    }
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspace": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "properties": {
+        "provisioningState": "Succeeded",
+        "state": "Enabled",
+        "version": "08585970785206527550",
+        "accessEndpoint": "https://prod-13.canadacentral.logic.azure.com:443/workflows/c078b0279b3d47d097c597bfc36bcb05",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_response_to_an_Azure_Sentinel_alert_is_triggered": {
+              "type": "ApiConnectionWebhook",
+              "inputs": {
+                "body": {
+                  "callback_url": "@{listCallbackUrl()}"
                 },
-                "eventGroupingSettings": {
-                    "aggregationKind": "SingleAlert"
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuresentinel_1']['connectionId']"
+                  }
                 },
-                "alertDetailsOverride": null,
-                "customDetails": null,
-                "entityMappings": [
-                    {
-                        "entityType": "Account",
-                        "fieldMappings": [
-                            {
-                                "identifier": "FullName",
-                                "columnName": "AccountCustomEntity"
-                            }
-                        ]
-                    },
-                    {
-                        "entityType": "IP",
-                        "fieldMappings": [
-                            {
-                                "identifier": "Address",
-                                "columnName": "IPCustomEntity"
-                            }
-                        ]
-                    }
+                "path": "/subscribe"
+              }
+            }
+          },
+          "actions": {
+            "Alert_-_Get_IPs": {
+              "runAfter": {},
+              "type": "ApiConnection",
+              "inputs": {
+                "body": "@triggerBody()?['Entities']",
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['azuresentinel_1']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "/entities/ip"
+              }
+            },
+            "Condition_2": {
+              "actions": {
+                "Set_variable": {
+                  "runAfter": {},
+                  "type": "SetVariable",
+                  "inputs": {
+                    "name": "comment",
+                    "value": "@{concat(substring(body('Create_CSV_table'), 0, 750), '...')}"
+                  }
+                }
+              },
+              "runAfter": {
+                "Initialize_variable_4": [
+                  "Succeeded"
                 ]
-            }
-        },
-        {
-            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6858cc6d-8cab-4710-8f55-ad3c1eeee84f/actions/97a6820c101a45d5b24867a463d0226d')]",
-            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/6858cc6d-8cab-4710-8f55-ad3c1eeee84f/97a6820c101a45d5b24867a463d0226d')]",
-            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions",
-            "apiVersion": "2021-09-01-preview",
-            "properties": {
-                "ruleId": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6858cc6d-8cab-4710-8f55-ad3c1eeee84f')]",
-                "triggerUri": "[listCallbackURL(concat('/subscriptions/f304d959-c8d3-4e48-bb37-89e4b4144bad/resourceGroups/RG-AbrarHNet-Monitor/providers/Microsoft.Logic/workflows/Sentinel-PB-02-Alert','/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
-                "logicAppResourceId": "/subscriptions/f304d959-c8d3-4e48-bb37-89e4b4144bad/resourceGroups/RG-AbrarHNet-Monitor/providers/Microsoft.Logic/workflows/Sentinel-PB-02-Alert",
-                "operatesOn": "Alert"
+              },
+              "expression": {
+                "and": [
+                  {
+                    "greater": [
+                      "@length(body('Create_CSV_table'))",
+                      2750
+                    ]
+                  }
+                ]
+              },
+              "type": "If"
             },
-            "dependsOn": [
-                "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/6858cc6d-8cab-4710-8f55-ad3c1eeee84f')]"
-            ]
-        },
-        {
-            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
-            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
-            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
-            "kind": "Scheduled",
-            "apiVersion": "2021-09-01-preview",
-            "properties": {
-                "displayName": "Azure activity matching known threats",
-                "description": "This analytic matches Azure Activity logs to known threats from your threat intelligence repository. Reference the threat indicator to determine the threat type involved in the activity.",
-                "severity": "Medium",
-                "enabled": true,
-                "query": "AzureActivity\n| take 1\n| extend IPCustomEntity = '80.87.202.49'\n| extend AccountCustomEntity = Caller",
-                "queryFrequency": "P1D",
-                "queryPeriod": "P14D",
-                "triggerOperator": "GreaterThan",
-                "triggerThreshold": 0,
-                "suppressionDuration": "PT5H",
-                "suppressionEnabled": false,
-                "tactics": [
-                    "Impact"
-                ],
-                "alertRuleTemplateName": null,
-                "incidentConfiguration": {
-                    "createIncident": true,
-                    "groupingConfiguration": {
-                        "enabled": true,
-                        "reopenClosedIncident": false,
-                        "lookbackDuration": "P1D",
-                        "matchingMethod": "Selected",
-                        "groupByEntities": [
-                            "IP"
-                        ],
-                        "groupByAlertDetails": null,
-                        "groupByCustomDetails": null
+            "Create_CSV_table": {
+              "runAfter": {
+                "For_each": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Table",
+              "inputs": {
+                "format": "CSV",
+                "from": "@variables('infra')"
+              }
+            },
+            "For_each": {
+              "foreach": "@body('Alert_-_Get_IPs')?['IPs']",
+              "actions": {
+                "For_each_5": {
+                  "foreach": "@body('Passive_DNS_results_by_name')?['records']",
+                  "actions": {
+                    "Condition": {
+                      "actions": {
+                        "Append_to_array_variable": {
+                          "runAfter": {},
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "infra",
+                            "value": {
+                              " ": "@items('For_each_5')?['name']"
+                            }
+                          }
+                        },
+                        "Append_to_array_variable_2": {
+                          "runAfter": {
+                            "Append_to_array_variable": [
+                              "Succeeded"
+                            ]
+                          },
+                          "type": "AppendToArrayVariable",
+                          "inputs": {
+                            "name": "duplicates",
+                            "value": "@items('For_each_5')?['name']"
+                          }
+                        }
+                      },
+                      "runAfter": {},
+                      "expression": {
+                        "and": [
+                          {
+                            "not": {
+                              "contains": [
+                                "@variables('duplicates')",
+                                "@items('For_each_5')?['name']"
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "type": "If"
                     }
+                  },
+                  "runAfter": {
+                    "Passive_DNS_results_by_name": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Foreach"
                 },
-                "eventGroupingSettings": {
-                    "aggregationKind": "SingleAlert"
-                },
-                "alertDetailsOverride": null,
-                "customDetails": null,
-                "entityMappings": null
-            }
-        },
-        {
-            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817/actions/c078b0279b3d47d097c597bfc36bcb05')]",
-            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817/c078b0279b3d47d097c597bfc36bcb05')]",
-            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions",
-            "apiVersion": "2021-09-01-preview",
-            "properties": {
-                "ruleId": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
-                "triggerUri": "[listCallbackURL(concat('/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS','/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
-                "logicAppResourceId": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS",
-                "operatesOn": "Alert"
+                "Passive_DNS_results_by_name": {
+                  "runAfter": {},
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['riskiqintelligence_1']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "/v0/pdns/data/ip",
+                    "queries": {
+                      "ip": "@items('For_each')?['Address']",
+                      "lastSeenAfter": "@variables('last30')"
+                    }
+                  }
+                }
+              },
+              "runAfter": {
+                "Initialize_variable_3": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach"
             },
-            "dependsOn": [
-                "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]"
+            "For_each_2": {
+              "foreach": "@body('Alert_-_Get_IPs')?['IPs']",
+              "actions": {
+                "Add_comment_to_incident_(V2)": {
+                  "runAfter": {},
+                  "type": "ApiConnection",
+                  "inputs": {
+                    "body": {
+                      "Value": "(Added via Incident Response Automation)\nLast 30-days of unique passive DNS records for @{items('For_each_2')?['Address']}\n@{variables('comment')}\nExplore more at https://community.riskiq.com/search/@{items('For_each_2')?['Address']}"
+                    },
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['azuresentinel_1']['connectionId']"
+                      }
+                    },
+                    "method": "put",
+                    "path": "/Comment/@{encodeURIComponent(triggerBody()?['WorkspaceSubscriptionId'])}/@{encodeURIComponent(triggerBody()?['WorkspaceId'])}/@{encodeURIComponent(triggerBody()?['WorkspaceResourceGroup'])}/@{encodeURIComponent('Alert')}/@{encodeURIComponent(triggerBody()?['SystemAlertId'])}"
+                  }
+                }
+              },
+              "runAfter": {
+                "Condition_2": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Foreach"
+            },
+            "Initialize_variable": {
+              "runAfter": {
+                "Initialize_variable_2": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "last30",
+                    "type": "string",
+                    "value": "@{formatDateTime(addDays(utcNow(), -30), 'yyyy-MM-dd')}"
+                  }
+                ]
+              }
+            },
+            "Initialize_variable_2": {
+              "runAfter": {
+                "Alert_-_Get_IPs": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "infra",
+                    "type": "array"
+                  }
+                ]
+              }
+            },
+            "Initialize_variable_3": {
+              "runAfter": {
+                "Initialize_variable": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "duplicates",
+                    "type": "array"
+                  }
+                ]
+              }
+            },
+            "Initialize_variable_4": {
+              "runAfter": {
+                "Create_CSV_table": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "comment",
+                    "type": "string",
+                    "value": "@body('Create_CSV_table')"
+                  }
+                ]
+              }
+            }
+          },
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "azuresentinel_1": {
+                "connectionId": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Web/connections/azuresentinel-Get-MDATPInvestigationPackage",
+                "connectionName": "azuresentinel-Get-MDATPInvestigationPackage",
+                "id": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/providers/Microsoft.Web/locations/canadacentral/managedApis/azuresentinel"
+              },
+              "riskiqintelligence_1": {
+                "connectionId": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/resourceGroups/SOC/providers/Microsoft.Web/connections/riskiqintelligence",
+                "connectionName": "riskiqintelligence",
+                "id": "/subscriptions/d1d8779d-38d7-4f06-91db-9cbc8de0176f/providers/Microsoft.Web/locations/canadacentral/managedApis/riskiqintelligence"
+              }
+            }
+          }
+        },
+        "endpointsConfiguration": {
+          "workflow": {
+            "outgoingIpAddresses": [
+              {
+                "address": "52.233.29.92"
+              },
+              {
+                "address": "52.228.39.244"
+              },
+              {
+                "address": "40.85.250.135"
+              },
+              {
+                "address": "40.85.250.212"
+              },
+              {
+                "address": "13.71.186.1"
+              },
+              {
+                "address": "40.85.252.47"
+              },
+              {
+                "address": "13.71.184.150"
+              }
+            ],
+            "accessEndpointIpAddresses": [
+              {
+                "address": "13.88.249.209"
+              },
+              {
+                "address": "52.233.30.218"
+              },
+              {
+                "address": "52.233.29.79"
+              },
+              {
+                "address": "40.85.241.105"
+              }
             ]
+          },
+          "connector": {
+            "outgoingIpAddresses": [
+              {
+                "address": "52.237.32.212"
+              },
+              {
+                "address": "52.237.24.126"
+              },
+              {
+                "address": "13.71.170.208/28"
+              },
+              {
+                "address": "13.71.175.160/27"
+              },
+              {
+                "address": "20.48.200.192/27"
+              },
+              {
+                "address": "20.48.200.224/28"
+              }
+            ]
+          }
         }
+      },
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')]",
+      "name": "Recent-IP-Passive-DNS",
+      "type": "Microsoft.Logic/workflows",
+      "location": "canadacentral",
+      "tags": {
+        "LogicAppsCategory": "security"
+      }
+    },
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+      "kind": "Scheduled",
+      "apiVersion": "2021-09-01-preview",
+      "properties": {
+        "displayName": "Azure activity matching known threats",
+        "description": "This analytic matches Azure Activity logs to known threats from your threat intelligence repository. Reference the threat indicator to determine the threat type involved in the activity.",
+        "severity": "Medium",
+        "enabled": true,
+        "query": "AzureActivity\n| take 1\n| extend IPCustomEntity = '80.87.202.49'\n| extend AccountCustomEntity = Caller",
+        "queryFrequency": "P1D",
+        "queryPeriod": "P14D",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT5H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "Impact"
+        ],
+        "alertRuleTemplateName": null,
+        "incidentConfiguration": {
+          "createIncident": true,
+          "groupingConfiguration": {
+            "enabled": true,
+            "reopenClosedIncident": false,
+            "lookbackDuration": "P1D",
+            "matchingMethod": "Selected",
+            "groupByEntities": [
+              "IP"
+            ],
+            "groupByAlertDetails": null,
+            "groupByCustomDetails": null
+          }
+        },
+        "eventGroupingSettings": {
+          "aggregationKind": "SingleAlert"
+        },
+        "alertDetailsOverride": null,
+        "customDetails": null,
+        "entityMappings": null
+      }
+    },
+    {
+      "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817/actions/c078b0279b3d47d097c597bfc36bcb05')]",
+      "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/e05fec26-5f5d-4ec3-99b6-080d1086e817/c078b0279b3d47d097c597bfc36bcb05')]",
+      "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions",
+      "apiVersion": "2021-09-01-preview",
+      "properties": {
+        "ruleId": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]",
+        "triggerUri": "[listCallbackURL([concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS'/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
+        "logicAppResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().resourceGroup, '/providers/Microsoft.Logic/workflows/Recent-IP-Passive-DNS')",
+        "operatesOn": "Alert"
+      },
+      "dependsOn": [
+        "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/e05fec26-5f5d-4ec3-99b6-080d1086e817')]"
       ]
- }
+    }
+  ]
+}
