@@ -87,6 +87,8 @@ function IsRetryable($deploymentName) {
     $retryableStatusCodes = "Conflict","TooManyRequests","InternalServerError"
     Try {
         $deploymentResult = Get-AzResourceGroupDeploymentOperation -DeploymentName $deploymentName -ResourceGroupName $ResourceGroupName -ErrorAction Stop
+        Write-Host "Failed with status code:" + $deploymentResult.StatusCode
+        Write-Host $deploymentResult
         return $retryableStatusCodes -contains $deploymentResult.StatusCode
     }
     Catch {
