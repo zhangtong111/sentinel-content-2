@@ -12,7 +12,7 @@ jobs:
     env:
       resourceGroupName: 'newecotestrg2'
       workspaceName: 'newlaworkspace1'
-      directory: '${{ github.workspace }}/Test'
+      directory: '${{ github.workspace }}/Detections'
       cloudEnv: 'AzurePPE'
       creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_50346124cc1e4322b1192ca52af59752 }}
       contentTypes: 'AnalyticsRule'

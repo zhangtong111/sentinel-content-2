@@ -90,8 +90,8 @@ function IsRetryable($deploymentName) {
         return $retryableStatusCodes -contains $deploymentResult.StatusCode
     }
     Catch {
-        "Failed with" + $deploymentResult.StatusCode
-        $deploymentResult
+        Write-Host "Failed with status code:" + $deploymentResult.StatusCode
+        Write-Host $deploymentResult
         return $false
     }
 }
