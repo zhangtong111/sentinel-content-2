@@ -6,7 +6,7 @@ $Directory = $Env:directory
 $Creds = $Env:creds
 $contentTypes = $Env:contentTypes
 $contentTypeMapping = @{
-    "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules","Microsoft.OperationalInsights/workspaces/providers/alertRules/actions");
+    "AnalyticsRule"=@("Microsoft.OperationalInsights/workspaces/providers/alertRules", "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions");
     "AutomationRule"=@("Microsoft.OperationalInsights/workspaces/providers/automationRules");
     "HuntingQuery"=@("Microsoft.OperationalInsights/workspaces/savedSearches");
     "Parser"=@("Microsoft.OperationalInsights/workspaces/savedSearches");
@@ -14,8 +14,13 @@ $contentTypeMapping = @{
     "Workbook"=@("Microsoft.Insights/workbooks");
     "Metadata"=@("Microsoft.OperationalInsights/workspaces/providers/metadata");
 }
-if (-not $contentTypes.contains("Metadata")) {
-    $ContentTypes += ",Metadata"
+if (-not ($contentTypes.contains("Metadata"))) {
+    if ([string]::IsNullOrEmpty($contentTypes)) {
+        $contentTypes = "Metadata"
+    }
+     else {
+        $contentTypes += ",Metadata"
+    }
 }
 $resourceTypes = $contentTypes.Split(",") | ForEach-Object { $contentTypeMapping[$_] }
 $MaxRetries = 3
