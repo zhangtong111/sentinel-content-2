@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream:.github/workflows/sentinel-deploy-50346124-cc1e-4322-b119-2ca52af59752.yml
 name: Deploy Content to newlaworkspace1 [50346124-cc1e-4322-b119-2ca52af59752]
 on: 
   push:
@@ -85,21 +84,12 @@ jobs:
   deploy-content:
     runs-on: windows-latest
     env:
-<<<<<<< HEAD:.github/workflows/sentinel-deploy-5bc0d2c3-0109-4346-81d1-1790fe79fa32.yml
       resourceGroupName: 'sentineleco_canarytest_rg'
       workspaceName: 'sentineleco-canarytest-law-eus2euap'
       directory: '${{ github.workspace }}\Test'
       cloudEnv: 'AzureCloud'
       creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_5bc0d2c30109434681d11790fe79fa32 }}
       contentTypes: 'Workbook,AnalyticsRule,AutomationRule,HuntingQuery,Parser,Playbook'
-=======
-      resourceGroupName: 'newecotestrg2'
-      workspaceName: 'newlaworkspace1'
-      directory: '${{ github.workspace }}'
-      cloudEnv: 'AzurePPE'
-      creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_50346124cc1e4322b1192ca52af59752 }}
-      contentTypes: 'AnalyticsRule'
->>>>>>> f545a9aea3e620694ed10680a75a57b6033b9807:.github/workflows/sentinel-deploy-50346124-cc1e-4322-b119-2ca52af59752.yml
 
     steps:
     - name: Login to Azure (Attempt 1)
