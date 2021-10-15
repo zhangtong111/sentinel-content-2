@@ -1,0 +1,74 @@
+name: Deploy Content to newlaworkspace1 [5f400b61-4753-40fc-a8ba-253dab2d9dff]
+on: 
+  push:
+    branches: [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/sentinel-deploy-5f400b61-4753-40fc-a8ba-253dab2d9dff.yml'
+
+jobs:
+  deploy-content:
+    runs-on: windows-latest
+    env:
+      resourceGroupName: 'newecotestrg2'
+      workspaceName: 'newlaworkspace1'
+      directory: '${{ github.workspace }}'
+      cloudEnv: 'AzurePPE'
+      creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_5f400b61475340fca8ba253dab2d9dff }}
+      contentTypes: 'AnalyticsRule'
+
+    steps:
+    - name: Login to Azure (Attempt 1)
+      continue-on-error: true
+      id: login1
+      uses: azure/login@v1
+      if: ${{ env.cloudEnv == 'AzureCloud' }}
+      with:
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_5f400b61475340fca8ba253dab2d9dff }}
+        enable-AzPSSession: true
+
+    - name: Wait 30 seconds if login attempt 1 failed
+      uses: juliangruber/sleep-action@v1
+      if: ${{ env.cloudEnv == 'AzureCloud' && steps.login1.outcome=='failure' }}
+      with:
+        time: 30s
+    
+    - name: Login to Azure (Attempt 2)
+      continue-on-error: true
+      id: login2
+      uses: azure/login@v1
+      if: ${{ env.cloudEnv == 'AzureCloud' && steps.login1.outcome=='failure' }}
+      with:
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_5f400b61475340fca8ba253dab2d9dff }}
+        enable-AzPSSession: true
+
+    - name: Wait 30 seconds if login attempt 2 failed
+      uses: juliangruber/sleep-action@v1
+      if: ${{ env.cloudEnv == 'AzureCloud' && steps.login2.outcome=='failure' }}
+      with:
+        time: 30s
+    
+    - name: Login to Azure (Attempt 3)
+      continue-on-error: false
+      id: login3
+      uses: azure/login@v1
+      if: ${{ env.cloudEnv == 'AzureCloud' && steps.login2.outcome=='failure'  }}
+      with:
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_5f400b61475340fca8ba253dab2d9dff }}
+        enable-AzPSSession: true
+
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Read deployment script
+      id: deploymentScript
+      uses: juliangruber/read-file-action@v1
+      with:
+        path: '${{ github.workspace }}/.github/workflows/azure-sentinel-deploy.ps1'
+    
+    - name: Deploy Content to Azure Sentinel
+      uses: azure/powershell@v1
+      with:
+        azPSVersion: 'latest'
+        inlineScript: |
+          ${{ steps.deploymentScript.outputs.content }}
